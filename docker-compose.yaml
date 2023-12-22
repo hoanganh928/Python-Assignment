@@ -1,0 +1,32 @@
+version: "3"
+services:
+  db:
+    container_name: app-db
+    image: postgres:16-alpine
+    ports:
+      - "54321:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=admin321
+      - POSTGRES_DB=omnihr
+    volumes:
+      - db-data:/var/lib/postgresql/data
+  app:
+    container_name: app
+    depends_on:
+      - migration
+      - db
+    build:
+      context: .
+    ports:
+      - "8000:8000"
+    command: gunicorn --bind :8000 --workers 4 OmniHR.wsgi:application
+  migration:
+    container_name: migration
+    depends_on:
+      - db
+    build:
+      context: .
+    command: python manage.py migrate
+volumes:
+  db-data:
